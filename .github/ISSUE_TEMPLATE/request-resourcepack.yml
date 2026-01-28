@@ -20,7 +20,6 @@ body:
   id: resource_pack_url
   attributes:
     label: "Resource Pack URL"
-    value: "https://curseforge.com/minecraft/texture-packs/"
     placeholder: "e.g. https://curseforge.com/minecraft/texture-packs/pack"
   validations:
     required: true

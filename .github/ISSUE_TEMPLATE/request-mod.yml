@@ -20,7 +20,6 @@ body:
   id: mod_url
   attributes:
     label: "Mod URL"
-    value: "https://curseforge.com/minecraft/mc-mods/"
     placeholder: "e.g. https://curseforge.com/minecraft/mc-mods/mod"
   validations:
     required: true
