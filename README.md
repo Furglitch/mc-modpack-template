@@ -9,7 +9,11 @@ To create a new modpack project using this template, click the "Use this templat
 
 After creating your repository, you'll want to enable GitHub Actions in your repository settings to use the predefined workflows. The setting can be found under `Settings` > `Actions` > `General`. Set the `Allow all actions and reusable workflows` option and change the `Workflow permissions` to `Read and write permissions`.
 
+<center><img src=".github/docs/assets/actions_permissions.png" alt="GitHub Actions Permissions" height=200px></center><br>
+
 After that, use the 'Create New Modpack' workflow in the `Actions` tab to initialize your modpack. It will have you provide your modpack's name, version, and author. This will update pack.toml and other necessary files with your modpack's information.
+
+<center><img src=".github/docs/assets/create-pack_prompt.png" alt="Create New Modpack workflow prompt" height=300px></center><br>
 
 ### Setting Up Your Modpack
 
