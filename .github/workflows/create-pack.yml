@@ -28,6 +28,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download packwiz binary
+        uses: dawidd6/action-download-artifact@v12
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: go.yml
+          repo: packwiz/packwiz
+          name: Linux 64-bit x86
+          path: ./packwiz-bin
+
+      - name: Install packwiz
+        run: |
+          chmod +x ./packwiz-bin/packwiz
+          sudo mv ./packwiz-bin/packwiz /usr/local/bin/
+
       - name: Update pack.toml
         env:
           NAME: ${{ inputs.modpack_name }}
@@ -45,6 +65,10 @@ jobs:
           sed -E -i "s/^(version\s*=\s*\").*(\")/\1${VERSION//\//\\\/}\2/" "$file"
           sed -E -i "s/^(author\s*=\s*\").*(\")/\1${AUTHOR//\//\\\/}\2/" "$file"
           git add "$file"
+
+      - name: Refresh pack index
+        working-directory: ./packwiz
+        run: packwiz refresh || true
 
       - name: Move template README into .github/docs/
         run: |
