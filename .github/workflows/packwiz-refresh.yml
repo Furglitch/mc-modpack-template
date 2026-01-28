@@ -6,9 +6,9 @@ permissions:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 1.21.1-NeoForge ]
   pull_request:
-    branches: [ main ]
+    branches: [ 1.21.1-NeoForge ]
 
 jobs:
   update:
