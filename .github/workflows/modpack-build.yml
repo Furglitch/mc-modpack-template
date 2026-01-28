@@ -70,6 +70,7 @@ jobs:
           packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack'
 
       - name: Upload client modpack artifact
+        if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - CurseForge Client
@@ -77,6 +78,7 @@ jobs:
           compression-level: 0
       
       - name: Upload modrinth client modpack artifact
+        if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth Client
@@ -183,6 +185,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Upload server modpack artifact
+        if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER
