@@ -2,9 +2,15 @@ name: Build Modpack
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 1.21.1-NeoForge ]
+    paths:
+      - 'packwiz/**'
+      - 'server/**'
   pull_request:
-    branches: [ main ]
+    branches: [ 1.21.1-NeoForge ]
+    paths:
+      - 'packwiz/**'
+      - 'server/**'
   workflow_dispatch:
 
 concurrency:
@@ -53,7 +59,7 @@ jobs:
       - name: Export client modpack (Modrinth)
         working-directory: ./packwiz
         run: |
-          packwiz modrinth export --side client --output modrinth.zip
+          packwiz modrinth export --output modrinth.zip
 
       - name: Extract client modpacks
         run: |
