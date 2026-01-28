@@ -48,7 +48,7 @@ jobs:
         working-directory: ./packwiz
         run: packwiz refresh || true
 
-      - name: Commit refresh to main
+      - name: Commit refresh
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
@@ -57,7 +57,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: refresh packwiz index"
-            git push origin HEAD:main
+            git push origin HEAD:${{ github.ref_name }}
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
