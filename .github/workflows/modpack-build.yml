@@ -1,0 +1,195 @@
+name: Build Modpack
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: modpack-build
+  cancel-in-progress: true
+
+jobs:
+  build-client:
+    name: Build Client Modpack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download packwiz binary
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: go.yml
+          repo: packwiz/packwiz
+          name: Linux 64-bit x86
+          path: ./packwiz-bin
+
+      - name: Install packwiz
+        run: |
+          chmod +x ./packwiz-bin/packwiz
+          sudo mv ./packwiz-bin/packwiz /usr/local/bin/
+
+      - name: Refresh pack index
+        working-directory: ./packwiz
+        run: packwiz refresh || true
+
+      - name: Export client modpack (CurseForge)
+        working-directory: ./packwiz
+        run: |
+          packwiz curseforge export --side client --output curseforge.zip
+
+      - name: Export client modpack (Modrinth)
+        working-directory: ./packwiz
+        run: |
+          packwiz modrinth export --side client --output modrinth.zip
+
+      - name: Extract client modpacks
+        run: |
+          mkdir -p curseforge-client modrinth-client
+          unzip -o packwiz/curseforge.zip -d curseforge-client || true
+          unzip -o packwiz/modrinth.zip -d modrinth-client || true
+
+      - name: Parse pack info
+        id: pack_info
+        run: |
+          NAME=$(grep '^name = ' packwiz/pack.toml | cut -d '"' -f 2)
+          VERSION=$(grep '^version = ' packwiz/pack.toml | cut -d '"' -f 2)
+          SANITIZED_NAME=$(printf '%s' "$NAME" | sed 's/[":<>|*?\\\/]/-/g')
+          echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload client modpack artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CURSEFORGE-CLIENT.zip
+          path: curseforge-client/
+      
+      - name: Upload modrinth client modpack artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH-CLIENT.zip
+          path: modrinth-client/
+
+  build-server:
+    name: Build Server Modpack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download packwiz binary
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: go.yml
+          repo: packwiz/packwiz
+          name: Linux 64-bit x86
+          path: ./packwiz-bin
+
+      - name: Install packwiz
+        run: |
+          chmod +x ./packwiz-bin/packwiz
+          sudo mv ./packwiz-bin/packwiz /usr/local/bin/
+
+      - name: Refresh pack index
+        working-directory: ./packwiz
+        run: packwiz refresh || true
+
+      - name: Build server modpack
+        working-directory: ./packwiz
+        run: |
+          # Parse NeoForge version from pack.toml
+          NEOFORGE_VERSION=$(grep '^neoforge = ' pack.toml | cut -d '"' -f 2)
+          echo "NeoForge version: $NEOFORGE_VERSION"
+          
+          # Install packwiz-installer
+          wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
+          
+          # Create server directory structure
+          mkdir -p ../modpack-server
+          
+          # Copy configs
+          cp -r config ../modpack-server/ || true
+          
+          # Copy server files (startup scripts, properties, icon)
+          cp -r ../server/* ../modpack-server/ || true
+          
+          # Replace NeoForge version in startup scripts
+          sed -i "s/\\$NEOFORGE_VERSION/${NEOFORGE_VERSION}/g" ../modpack-server/startserver.sh || true
+          sed -i "s/%NEOFORGE_VERSION%/${NEOFORGE_VERSION}/g" ../modpack-server/startserver.bat || true
+          
+          # Download all mods using packwiz (first pass - collect excluded files)
+          cd ../modpack-server
+          echo "Running first pass to collect CurseForge-excluded files..."
+          java -jar ../packwiz/packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/main/packwiz/pack.toml 2>&1 | tee install.log || true
+          
+          # Parse and download excluded files from CDN
+          echo "Downloading CurseForge-excluded files from CDN..."
+          grep "Please go to" install.log | while read -r line; do
+            cf_url=$(echo "$line" | grep -oP 'https://www\\.curseforge\\.com[^ ]+')
+            file_id=$(echo "$cf_url" | grep -oP '/files/\\K[0-9]+')
+            dest_path=$(echo "$line" | grep -oP 'save this file to \\K.+')
+            if [ -n "$file_id" ] && [ -n "$dest_path" ]; then
+              id_part1=$(echo "$file_id" | sed 's/\(.*\)\(...\)/\1/')
+              id_part2=$(echo "$file_id" | sed 's/.*\(...\)/\1/')
+              filename=$(basename "$dest_path")
+              encoded_filename=$(echo "$filename" | sed 's/ /%20/g' | sed "s/'/%27/g")
+              cdn_url="https://edge.forgecdn.net/files/${id_part1}/${id_part2}/${encoded_filename}"
+              echo "Downloading: $cdn_url -> $dest_path"
+              mkdir -p "$(dirname "$dest_path")"
+              wget -q "$cdn_url" -O "$dest_path" || echo "Failed to download $cdn_url"
+            fi
+          done
+          
+          # Run packwiz-installer again to complete installation
+          echo "Running second pass to complete installation..."
+          java -jar ../packwiz/packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/main/packwiz/pack.toml
+          
+          # Download NeoForge server
+          echo "Downloading NeoForge server $NEOFORGE_VERSION..."
+          wget https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-installer.jar -O neoforge-$NEOFORGE_VERSION-installer.jar || true
+          
+          # Remove client-only folders
+          echo "Removing client-only folders (resourcepacks, shaderpacks)..."
+          rm -rf resourcepacks shaderpacks || true
+
+      - name: Clean server artifact (remove logs and installers)
+        run: |
+          rm -f modpack-server/install.log || true
+          rm -f modpack-server/packwiz.json || true
+          rm -f modpack-server/packwiz-installer.jar || true
+
+      - name: Parse pack info
+        id: pack_info
+        run: |
+          NAME=$(grep '^name = ' packwiz/pack.toml | cut -d '"' -f 2)
+          VERSION=$(grep '^version = ' packwiz/pack.toml | cut -d '"' -f 2)
+          SANITIZED_NAME=$(printf '%s' "$NAME" | sed 's/[":<>|*?\\\/]/-/g')
+          echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload server modpack artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER.zip
+          path: modpack-server/

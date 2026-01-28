@@ -1,0 +1,161 @@
+name: Update Mods
+
+on:
+  schedule:
+    - cron: '0 6 */2 * *'
+    # - timezone: 'America/New_York' <- Not yet supported : https://github.com/github/roadmap/issues/1187
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: modpack-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Refresh & Update Mods
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.find_changes.outputs.changed }}
+      body: ${{ steps.find_changes.outputs.body }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Check if branch exists
+        id: branch
+        run: |
+          git fetch origin action/update-mods || true
+          if git ls-remote --exit-code --heads origin action/update-mods; then
+            echo "Branch exists remotely, checking it out"
+            git checkout action/update-mods
+          else
+            echo "Creating branch from origin/main"
+            git checkout -b action/update-mods origin/main
+          fi
+
+      - name: Download packwiz binary
+        uses: dawidd6/action-download-artifact@v12
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: go.yml
+          repo: packwiz/packwiz
+          name: Linux 64-bit x86
+          path: ./packwiz-bin
+
+      - name: Install packwiz
+        run: |
+          chmod +x ./packwiz-bin/packwiz
+          sudo mv ./packwiz-bin/packwiz /usr/local/bin/
+
+      - name: Refresh pack index
+        working-directory: ./packwiz
+        run: packwiz refresh || true
+
+      - name: Update mods
+        working-directory: ./packwiz
+        run: packwiz update --all --yes || true
+
+      - name: Detect changed mod files and build PR body
+        id: find_changes
+        run: |
+          set -e
+          # Find modified .pw.toml files
+          CHANGED_FILES=$(git status --porcelain -- packwiz/mods/ | awk '{print $2}' | tr '\n' ' ')
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No packwiz/mods/*.pw.toml changed"
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "body=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          BODY="## Updated Mods:\n"
+          for f in $(git diff --name-only origin/main...HEAD -- packwiz/mods/*.pw.toml); do
+            # Get old version from origin/main (best-effort)
+            OLD_VERSION=$(git show origin/main:$f 2>/dev/null | grep '^version\s*=\s*' | head -n1 | cut -d '"' -f2 || true)
+            NEW_VERSION=$(grep '^version\s*=\s*' "$f" | head -n1 | cut -d '"' -f2 || true)
+            MOD_NAME=$(grep '^name\s*=\s*' "$f" | head -n1 | cut -d '"' -f2 || basename "$f" .pw.toml)
+            if [ -z "$OLD_VERSION" ]; then OLD_VERSION="(unknown)"; fi
+            if [ -z "$NEW_VERSION" ]; then NEW_VERSION="(unknown)"; fi
+            BODY+="**${MOD_NAME}** ${OLD_VERSION} ➜ ${NEW_VERSION}\n"
+          done
+
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Commit mod updates
+        if: steps.find_changes.outputs.changed == 'true'
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add packwiz/mods/*.pw.toml || true
+          if git diff --staged --quiet; then
+            echo "No staged changes"
+          else
+            git commit -m "chore: update mods via packwiz"
+          fi
+
+      - name: Push branch
+        if: steps.find_changes.outputs.changed == 'true'
+        run: |
+          git push --set-upstream origin action/update-mods --force
+
+  create_pr:
+    name: Create or Update PR
+    runs-on: ubuntu-latest
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Check if PR already exists
+        id: check_pr
+        run: |
+          PR_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:action/update-mods&base=main&state=open")
+          PR_NUMBER=$(echo "$PR_INFO" | jq -r '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create or update pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v8.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update mods via packwiz"
+          title: "chore: update mods"
+          body: ${{ needs.update.outputs.body }}
+          base: main
+          branch: action/update-mods
+
+      - name: Comment with update summary (if exists)
+        if: steps.check_pr.outputs.pr_exists == 'true'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          issue-number: ${{ steps.check_pr.outputs.pr_number }}
+          body: ${{ needs.update.outputs.body }}
