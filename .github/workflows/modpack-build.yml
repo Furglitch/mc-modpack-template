@@ -50,23 +50,6 @@ jobs:
       - name: Refresh pack index
         working-directory: ./packwiz
         run: packwiz refresh || true
-
-      - name: Export client modpack (CurseForge)
-        working-directory: ./packwiz
-        run: |
-          packwiz curseforge export --side client --output curseforge.zip
-
-      - name: Export client modpack (Modrinth)
-        working-directory: ./packwiz
-        run: |
-          packwiz modrinth export --output modrinth.zip
-
-      - name: Extract client modpacks
-        run: |
-          mkdir -p curseforge-client modrinth-client
-          unzip -o packwiz/curseforge.zip -d curseforge-client || true
-          unzip -o packwiz/modrinth.zip -d modrinth-client || true
-
       - name: Parse pack info
         id: pack_info
         run: |
@@ -76,17 +59,29 @@ jobs:
           echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Export client modpack (CurseForge)
+        working-directory: ./packwiz
+        run: |
+          packwiz curseforge export --side client --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip'
+
+      - name: Export client modpack (Modrinth)
+        working-directory: ./packwiz
+        run: |
+          packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack'
+
       - name: Upload client modpack artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CURSEFORGE-CLIENT.zip
-          path: curseforge-client/
+          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - CurseForge Client
+          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip
+          compression-level: 0
       
       - name: Upload modrinth client modpack artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH-CLIENT.zip
-          path: modrinth-client/
+          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth Client
+          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack
+          compression-level: 0
 
   build-server:
     name: Build Server Modpack
@@ -190,5 +185,5 @@ jobs:
       - name: Upload server modpack artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER.zip
+          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER
           path: modpack-server/
