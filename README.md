@@ -1,13 +1,18 @@
 # Minecraft Modpack Template
 A repo template for developing Minecraft modpacks, utilizing packwiz
 
-
 ## Using This Template
+
+
+### Setting Up Your Repository
 To create a new modpack project using this template, click the "Use this template" button at the top of the page. This will create a new repository in your GitHub account with the same directory structure and files as this template.
 
+After creating your repository, you'll want to enable GitHub Actions in your repository settings to use the predefined workflows. The setting can be found under `Settings` > `Actions` > `General`. Set the `Allow all actions and reusable workflows` option and change the `Workflow permissions` to `Read and write permissions`.
+
+After that, use the 'Create New Modpack' workflow in the `Actions` tab to initialize your modpack. It will have you provide your modpack's name, version, and author. This will update pack.toml and other necessary files with your modpack's information.
+
 ### Setting Up Your Modpack
-1. Select the branch that matches the Minecraft version and modloader you want to use (e.g., `1.21.1-NeoForge`).
-   - It is recommended to delete the other branches if you won't be using.
+
 2. Clone the repository to your local machine using Git.
     ```bash
     git clone <your-repo-url> -b <branch> '<desired-folder>'
@@ -47,8 +52,6 @@ NOTE: The startup scripts have the placeholder 'NEOFORGE_VERSION' in them, which
 
 ## Action Workflows
 This modpack template includes predefined GitHub Actions workflows to automate common tasks such as building and updating your modpack.
-
-- Note: You may need to enable GitHub Actions in your repository settings to use these workflows. The setting can be found under `Settings` > `Actions` > `General`. Set the `Allow all actions and reusable workflows` option and change the `Workflow permissions` to `Read and write permissions`.
 
 ### modpack-build.yml
 This workflow automatically builds your modpack whenever changes are pushed to the branch. It also runs on pull requests targeting the branch. 

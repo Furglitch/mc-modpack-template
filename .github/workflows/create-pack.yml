@@ -1,0 +1,83 @@
+name: Create New Modpack
+
+on:
+  workflow_dispatch:
+    inputs:
+      modpack_name:
+        description: 'Modpack Name'
+        required: true
+        default: 'MODPACK NAME'
+      modpack_version:
+        description: 'Modpack Version'
+        required: false
+        default: '1.0.0'
+      modpack_author:
+        description: 'Modpack Author'
+        required: true
+        default: 'YOUR NAME HERE'
+
+permissions:
+  contents: write
+
+jobs:
+  update-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update pack.toml
+        env:
+          NAME: ${{ inputs.modpack_name }}
+          VERSION: ${{ inputs.modpack_version }}
+          AUTHOR: ${{ inputs.modpack_author }}
+        run: |
+          set -euo pipefail
+          file="packwiz/pack.toml"
+          if [ ! -f "$file" ]; then
+            echo "$file not found"
+            exit 1
+          fi
+          # Replace name, version, author preserving quoting
+          sed -E -i "s/^(name\s*=\s*\").*(\")/\1${NAME//\//\\\/}\2/" "$file"
+          sed -E -i "s/^(version\s*=\s*\").*(\")/\1${VERSION//\//\\\/}\2/" "$file"
+          sed -E -i "s/^(author\s*=\s*\").*(\")/\1${AUTHOR//\//\\\/}\2/" "$file"
+          git add "$file"
+
+      - name: Move README.md into .github/docs/
+        run: |
+          set -euo pipefail
+          mkdir -p .github/docs
+          if git ls-files --error-unmatch README.md >/dev/null 2>&1; then
+            git mv README.md .github/docs/README.md
+          else
+            if [ -f README.md ]; then
+              mv README.md .github/docs/README.md
+              git add .github/docs/README.md
+            fi
+          fi
+
+      - name: Remove .github/FUNDING.yml if present
+        run: |
+          if [ -f .github/FUNDING.yml ]; then
+            git rm -f .github/FUNDING.yml || true
+          fi
+
+      - name: Remove this workflow file
+        run: |
+          if [ -f .github/workflows/create-pack.yml ]; then
+            git rm -f .github/workflows/create-pack.yml || true
+          fi
+
+      - name: Commit and push changes
+        run: |
+          if git status --porcelain | grep . >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: Initial modpack setup via create-pack workflow"
+            git push
+          else
+            echo "No changes to commit"
+          fi
