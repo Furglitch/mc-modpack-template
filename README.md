@@ -7,7 +7,7 @@ A repo template for developing Minecraft modpacks, utilizing packwiz
 ### Setting Up Your Repository
 To create a new modpack project using this template, click the "Use this template" button at the top of the page. This will create a new repository in your GitHub account with the same directory structure and files as this template.
 
-After creating your repository, you'll want to enable GitHub Actions in your repository settings to use the predefined workflows. The setting can be found under `Settings` > `Actions` > `General`. Set the `Allow all actions and reusable workflows` option and change the `Workflow permissions` to `Read and write permissions`.
+After creating your repository, you'll want to enable GitHub Actions in your repository settings to use the predefined workflows.<br>The setting can be found under `Settings` > `Actions` > `General`. Set the `Allow all actions and reusable workflows` option and change the `Workflow permissions` to `Read and write permissions`. Additionally, enable the `Allow GitHub Actions to create and approve pull requests` option if you want to use the automatic mod update feature.
 
 <center><img src=".github/docs/assets/actions_permissions.png" alt="GitHub Actions Permissions" height=200px></center><br>
 
@@ -64,6 +64,8 @@ It generates three files, two client-side files (.zip for CurseForge and .mrpack
 
 ### modpack-update.yml
 This workflow checks for updates to the mods and other resources in your modpack every two days. If updates are found, it automatically creates a pull request with the updated files.
+
+Using `packwiz pin <mod>` pins the mod to its current version. This prevents it from being updated by `packwiz update` and the GitHub Actions workflow.
 
 ### packwiz-refresh.yml
 This workflow runs `packwiz refresh` on the `/packwiz/` folder whenever a push is made to the branch. This ensures that the packwiz metadata is always up to date. This also runs on pull requests targeting the branch to ensure consistency before merging.
