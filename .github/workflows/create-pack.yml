@@ -46,26 +46,26 @@ jobs:
           sed -E -i "s/^(author\s*=\s*\").*(\")/\1${AUTHOR//\//\\\/}\2/" "$file"
           git add "$file"
 
-      - name: Move README.md into .github/docs/
+      - name: Move template README into .github/docs/
         run: |
           set -euo pipefail
           mkdir -p .github/docs
           if git ls-files --error-unmatch README.md >/dev/null 2>&1; then
-            git mv README.md .github/docs/README.md
+            git mv README.md .github/docs/TEMPLATE.md
           else
             if [ -f README.md ]; then
-              mv README.md .github/docs/README.md
-              git add .github/docs/README.md
+              mv README.md .github/docs/TEMPLATE.md
+              git add .github/docs/TEMPLATE.md
             fi
           fi
 
-      - name: Remove .github/FUNDING.yml if present
+      - name: Remove FUNDING.yml
         run: |
           if [ -f .github/FUNDING.yml ]; then
             git rm -f .github/FUNDING.yml || true
           fi
 
-      - name: Remove this workflow file
+      - name: Remove this workflow
         run: |
           if [ -f .github/workflows/create-pack.yml ]; then
             git rm -f .github/workflows/create-pack.yml || true
