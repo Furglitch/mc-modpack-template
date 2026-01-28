@@ -119,37 +119,34 @@ jobs:
 
       - name: Refresh pack index
         working-directory: ./packwiz
-        run: packwiz refresh || true
-
-      - name: Build server modpack
-        working-directory: ./packwiz
         run: |
-          # Parse NeoForge version from pack.toml
+          packwiz refresh || true
+
+      - name: Create server modpack structure
+        run: |
+          mkdir -p modpack-server
+          mkdir -p modpack-server/config
+          cp -r packwiz/config/* modpack-server/config/ || true
+          cp -r packwiz/server/* modpack-server/ || true
+
+      - name: Set up Neoforge installer
+        working-directory: ./modpack-server
+        run: |
           NEOFORGE_VERSION=$(grep '^neoforge = ' pack.toml | cut -d '"' -f 2)
           echo "NeoForge version: $NEOFORGE_VERSION"
-          
-          # Install packwiz-installer
+          sed -i "s/\\$NEOFORGE_VERSION/${NEOFORGE_VERSION}/g" startserver.sh || true
+          sed -i "s/%NEOFORGE_VERSION%/${NEOFORGE_VERSION}/g" startserver.bat || true
+          echo "Downloading NeoForge server $NEOFORGE_VERSION..."
+          wget https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-installer.jar -O neoforge-$NEOFORGE_VERSION-installer.jar || true
+
+      - name: Build server modpack
+        working-directory: ./modpack-server
+        run: |
           wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
-          
-          # Create server directory structure
-          mkdir -p ../modpack-server
-          
-          # Copy configs
-          cp -r config ../modpack-server/ || true
-          
-          # Copy server files (startup scripts, properties, icon)
-          cp -r ../server/* ../modpack-server/ || true
-          
-          # Replace NeoForge version in startup scripts
-          sed -i "s/\\$NEOFORGE_VERSION/${NEOFORGE_VERSION}/g" ../modpack-server/startserver.sh || true
-          sed -i "s/%NEOFORGE_VERSION%/${NEOFORGE_VERSION}/g" ../modpack-server/startserver.bat || true
-          
-          # Download all mods using packwiz (first pass - collect excluded files)
-          cd ../modpack-server
+
           echo "Running first pass to collect CurseForge-excluded files..."
-          java -jar ../packwiz/packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/main/packwiz/pack.toml 2>&1 | tee install.log || true
+          java -jar packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/${{ github.repository.branch }}/packwiz/pack.toml 2>&1 | tee install.log || true
           
-          # Parse and download excluded files from CDN
           echo "Downloading CurseForge-excluded files from CDN..."
           grep "Please go to" install.log | while read -r line; do
             cf_url=$(echo "$line" | grep -oP 'https://www\\.curseforge\\.com[^ ]+')
@@ -167,23 +164,19 @@ jobs:
             fi
           done
           
-          # Run packwiz-installer again to complete installation
           echo "Running second pass to complete installation..."
-          java -jar ../packwiz/packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/main/packwiz/pack.toml
-          
-          # Download NeoForge server
-          echo "Downloading NeoForge server $NEOFORGE_VERSION..."
-          wget https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-installer.jar -O neoforge-$NEOFORGE_VERSION-installer.jar || true
+          java -jar packwiz-installer-bootstrap.jar -g -s server https://raw.githubusercontent.com/${{ github.repository }}/${{ github.repository.branch }}/packwiz/pack.toml
           
           # Remove client-only folders
           echo "Removing client-only folders (resourcepacks, shaderpacks)..."
           rm -rf resourcepacks shaderpacks || true
 
-      - name: Clean server artifact (remove logs and installers)
-        run: |
+          # Remove packwiz installer files
+          echo "Removing packwiz installer files..."
           rm -f modpack-server/install.log || true
           rm -f modpack-server/packwiz.json || true
           rm -f modpack-server/packwiz-installer.jar || true
+          rm -f modpack-server/packwiz-installer-bootstrap.jar || true
 
       - name: Parse pack info
         id: pack_info
