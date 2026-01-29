@@ -34,7 +34,7 @@ jobs:
           java-version: '21'
 
       - name: Download packwiz binary
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v12
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
@@ -101,7 +101,7 @@ jobs:
           java-version: '21'
 
       - name: Download packwiz binary
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v12
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
