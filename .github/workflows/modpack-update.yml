@@ -16,7 +16,6 @@ concurrency:
 
 env: 
   origin-branch: ${{ github.ref_name }}
-  update-branch: action-modpack-update/${{ github.ref_name}}
 jobs:
   update:
     name: Refresh & Update Mods
@@ -27,25 +26,32 @@ jobs:
         with:
           ref: ${{ env.origin-branch }}
           fetch-depth: 0
+      
+      - name: Create update branch name
+        id: branch_name
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/packwiz/update/mods"
+          echo "update-branch=$branch" >> $GITHUB_OUTPUT
 
       - name: Pull existing PR branch
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          if git ls-remote --heads origin ${{ env.update-branch }} | grep -q ${{ env.update-branch }}; then
+          if git ls-remote --heads origin ${{ steps.branch_name.outputs.update-branch }} | grep -q ${{ steps.branch_name.outputs.update-branch }}; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            git fetch origin ${{ env.update-branch }}
+            git fetch origin ${{ steps.branch_name.outputs.update-branch }}
 
-            if git merge -X theirs --no-edit origin/${{ env.update-branch }}; then
-              echo "Merged origin/${{ env.origin-branch }} into origin/${{ env.update-branch }}"
+            if git merge -X theirs --no-edit origin/${{ steps.branch_name.outputs.update-branch }}; then
+              echo "Merged origin/${{ env.origin-branch }} into origin/${{ steps.branch_name.outputs.update-branch }}"
             else
               echo "Merge produced conflicts — auto-resolving by taking incoming changes..."
               git ls-files -u | awk '{print $4}' | sort -u | while read -r f; do
                 git checkout --theirs -- "$f" || true
                 git add "$f" || true
               done
-              git commit -m "Merge origin/${{ env.origin-branch }} into origin/${{ env.update-branch }}" || true
+              git commit -m "Merge origin/${{ env.origin-branch }} into origin/${{ steps.branch_name.outputs.update-branch }}" || true
             fi
           else
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -76,19 +82,6 @@ jobs:
       - name: Parse update output and prepare PR body
         id: update_parse
         run: |
-          cat > /tmp/extract_version.sh <<'EXTRACT_SCRIPT'
-          #!/bin/bash
-
-          extract_version() {
-            local version=$(basename "$1")
-            echo "$version"
-          }
-
-          extract_version "$1"
-          EXTRACT_SCRIPT
-
-          chmod +x /tmp/extract_version.sh
-
           if [ ! -f "/tmp/packwiz_update.out" ]; then
             echo "## Updated:" > /tmp/pr_body.txt
             echo "No updates found (file not found)." >> /tmp/pr_body.txt
@@ -108,8 +101,8 @@ jobs:
               old_file=$(echo "$old_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
               new_file=$(echo "$new_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-              old_version=$(/tmp/extract_version.sh "$old_file")
-              new_version=$(/tmp/extract_version.sh "$new_file")
+              old_version=$(basename "$old_file")
+              new_version=$(basename "$new_file")
 
               if [ -n "$old_version" ] && [ -n "$new_version" ]; then
                 echo "**${mod_name}:** ${old_version} ➜ ${new_version}"
@@ -142,7 +135,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: `${context.repo.owner}:${{ env.update-branch }}`
+              head: `${context.repo.owner}:${{ steps.branch_name.outputs.update-branch }}`
             });
             
             if (pullRequests.length > 0) {
@@ -164,7 +157,7 @@ jobs:
           commit-message: 'chore: update mods'
           title: 'chore: update mods'
           body: ${{ steps.pr_check.outputs.exists == 'true' && steps.pr_check.outputs.existing_body || steps.update_parse.outputs.body }}
-          branch: ${{ env.update-branch }}
+          branch: ${{ steps.branch_name.outputs.update-branch }}
           delete-branch: false
 
       - name: Comment on existing PR with new updates

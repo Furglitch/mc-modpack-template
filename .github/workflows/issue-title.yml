@@ -11,10 +11,11 @@ permissions:
 jobs: 
 
   process-bug-report: 
+    name: Update Bug Report Title
     runs-on: ubuntu-latest
     if: contains(github.event.issue.title, '[Bug -')
     steps:
-      - name: Update bug report title
+      - name: Update title
         uses: actions/github-script@v8
         with: 
           script: |
@@ -26,7 +27,6 @@ jobs:
               return;
             }
 
-            // Extract modpack version
             const versionMatch = body.match(/### Modpack version\s*\n\s*(.+)/i);
             if (versionMatch && versionMatch[1]) {
               const version = versionMatch[1].trim();
@@ -45,10 +45,11 @@ jobs:
             }
 
   process-mod-request:
+    name: Update Mod Request Title
     runs-on: ubuntu-latest
     if: contains(github.event.issue.title, '[Mod Addition]')
     steps:
-      - name: Update mod request title
+      - name: Update title
         uses: actions/github-script@v8
         with: 
           script: |
@@ -60,7 +61,6 @@ jobs:
               return;
             }
 
-            // Extract mod name
             const nameMatch = body.match(/### Mod name\s*\n\s*(.+)/i);
             if (nameMatch && nameMatch[1]) {
               const modName = nameMatch[1].trim();
@@ -80,6 +80,7 @@ jobs:
 
 
   process-resource-pack-request:
+    name: Update Resource Pack Request Title
     runs-on: ubuntu-latest
     if: contains(github.event.issue.title, '[Resource Pack Addition]')
     steps:
@@ -95,7 +96,6 @@ jobs:
               return;
             }
 
-            // Extract resource pack name
             const nameMatch = body.match(/### Resource Pack name\s*\n\s*(.+)/i);
             if (nameMatch && nameMatch[1]) {
               const resourcePackName = nameMatch[1].trim();

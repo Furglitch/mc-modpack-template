@@ -21,6 +21,7 @@ permissions:
 
 jobs:
   update-pack:
+    name: Update Modpack Info
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

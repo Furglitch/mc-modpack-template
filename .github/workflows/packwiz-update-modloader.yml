@@ -18,6 +18,7 @@ env:
 
 jobs:
   update-modloader:
+    name: Update NeoForge Modloader
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,7 +27,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Parse latest/current
+      - name: Parse latest/current NeoForge Modloader
         id: parse
         run: |
           set -euo pipefail
@@ -80,11 +81,8 @@ jobs:
 
           changelog_url="${{ env.maven_repo }}/${{ env.maven_path }}/${latest}/neoforge-${latest}-changelog.txt"
           if curl -fsSL "$changelog_url" -o /tmp/changelog.txt; then
-            # Trim changelog: include entries from the top down until (but not including) the old version
             if [ -n "$current" ]; then
-              # match lines containing the old version in backticks, stop before that line
               awk -v old="$current" 'BEGIN{pat="`"old"`"} $0 ~ pat {exit} {print}' /tmp/changelog.txt > /tmp/changelog_trimmed.txt || true
-              # fallback to full file if trim produced empty output
               if [ ! -s /tmp/changelog_trimmed.txt ]; then
                 cp /tmp/changelog.txt /tmp/changelog_trimmed.txt || true
               fi

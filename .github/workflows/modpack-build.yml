@@ -164,11 +164,9 @@ jobs:
           echo "Running second pass to complete installation..."
           java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml
           
-          # Remove client-only folders
           echo "Removing client-only folders (resourcepacks, shaderpacks)..."
           rm -rf resourcepacks shaderpacks || true
 
-          # Remove packwiz installer files
           echo "Removing packwiz installer files..."
           rm -f modpack-server/install.log || true
           rm -f modpack-server/packwiz.json || true
