@@ -3,6 +3,7 @@ name: Update Modloader Version
 on:
   schedule:
     - cron: '0 0 * * 1'
+    # - timezone: 'America/New_York' <- Not yet supported : https://github.com/github/roadmap/issues/1187
   workflow_dispatch:
 
 permissions:
