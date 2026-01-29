@@ -15,7 +15,7 @@ jobs:
     if: contains(github.event.issue.title, '[Bug -')
     steps:
       - name: Update bug report title
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with: 
           script: |
             const body = context.payload.issue.body || '';
@@ -49,7 +49,7 @@ jobs:
     if: contains(github.event.issue.title, '[Mod Addition]')
     steps:
       - name: Update mod request title
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with: 
           script: |
             const body = context.payload.issue.body || '';
@@ -84,7 +84,7 @@ jobs:
     if: contains(github.event.issue.title, '[Resource Pack Addition]')
     steps:
       - name: Update resource pack request title
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with: 
           script: |
             const body = context.payload.issue.body || '';
