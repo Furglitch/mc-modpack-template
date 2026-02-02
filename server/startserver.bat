@@ -8,7 +8,7 @@ if not defined CUSTOM_JAVA (
 )
 
 "%CUSTOM_JAVA%" -version 1>nul 2>nul || (
-   echo Minecraft 1.21 requires Java 21 - Java not found
+   echo Minecraft 1.20 requires Java 17 - Java not found
    pause
    exit /b 1
 )
@@ -27,8 +27,8 @@ if "%INSTALL_ONLY%" == "true" (
 )
 
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('"%CUSTOM_JAVA%" -fullversion 2^>^&1') do set "jver=%%j"
-if not %jver% geq 21  (
-    echo Minecraft 1.21 requires Java 21 - found Java %jver%
+if not %jver% geq 17  (
+    echo Minecraft 1.20 requires Java 17 - found Java %jver%
     pause
     exit /b 1
 ) 

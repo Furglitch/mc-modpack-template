@@ -10,7 +10,7 @@ pause() {
 
 # JAVA
 if ! command -v "${CUSTOM_JAVA:-java}" >/dev/null 2>&1; then
-    echo "Minecraft 1.21 requires Java 21 - Java not found"
+    echo "Minecraft 1.20 requires Java 17 - Java not found"
     pause
     exit 1
 fi
@@ -28,8 +28,8 @@ if [ "${INSTALL_ONLY:-false}" = "true" ]; then
 fi
 
 JAVA_VERSION=$("${CUSTOM_JAVA:-java}" -fullversion 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d'.' -f1)
-if [ ! "$JAVA_VERSION" -ge 21 ]; then
-    echo "Minecraft 1.21 requires Java 21 - found Java $JAVA_VERSION"
+if [ ! "$JAVA_VERSION" -ge 17 ]; then
+    echo "Minecraft 1.20 requires Java 17 - found Java $JAVA_VERSION"
     pause
     exit 1
 fi

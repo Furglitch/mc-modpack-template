@@ -13,7 +13,7 @@ permissions:
 env:
   maven_repo: "https://maven.neoforged.net/releases"
   maven_path: "net/neoforged/neoforge"
-  prefix: "21.1."
+  prefix: "47.1."
   pack_file: "packwiz/pack.toml"
 
 jobs:

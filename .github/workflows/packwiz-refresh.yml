@@ -6,16 +6,16 @@ permissions:
 
 on:
   push:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.20.1-NeoForge ]
     paths:
       - 'packwiz/**'
   pull_request:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.20.1-NeoForge ]
     paths:
       - 'packwiz/**'
 
 concurrency:
-  group: packwiz-refresh-1211-neoforge
+  group: packwiz-refresh-1201-neoforge
   cancel-in-progress: true
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Download packwiz binary
         uses: dawidd6/action-download-artifact@v12

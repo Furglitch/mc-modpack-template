@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Download packwiz binary
         uses: dawidd6/action-download-artifact@v12
@@ -123,7 +123,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git commit -m "chore: Initial modpack setup via create-pack workflow"
-            git push origin HEAD:1.21.1-NeoForge
+            git push origin HEAD:1.20.1-NeoForge
           else
             echo "No changes to commit"
           fi

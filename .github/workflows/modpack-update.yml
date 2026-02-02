@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: modpack-update-1211-neoforge
+  group: modpack-update-1201-neoforge
   cancel-in-progress: true
 
 env: 
