@@ -184,9 +184,7 @@ jobs:
       - name: Create CurseForge server modpack structure
         run: |
           mkdir -p modpack-server
-          mkdir -p modpack-server/config
-          cp -r packwiz/config/* modpack-server/config/ || true
-          cp -r packwiz/server/* modpack-server/ || true
+          cp -r server/* modpack-server/ || true
 
       - name: Set up Neoforge installer
         working-directory: ./modpack-server
@@ -245,7 +243,7 @@ jobs:
           rm -f modpack-server/packwiz-installer-bootstrap.jar || true
 
       - name: Upload CurseForge server modpack artifact
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-CURSEFORGE
