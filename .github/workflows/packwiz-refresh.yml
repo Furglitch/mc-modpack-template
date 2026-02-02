@@ -15,7 +15,7 @@ on:
       - 'packwiz/**'
 
 concurrency:
-  group: packwiz-refresh
+  group: packwiz-refresh-1211-neoforge
   cancel-in-progress: true
 
 jobs:

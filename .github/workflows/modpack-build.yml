@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: modpack-build
+  group: modpack-build-1211-neoforge
   cancel-in-progress: true
 
 jobs:
