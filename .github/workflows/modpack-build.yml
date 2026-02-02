@@ -82,7 +82,6 @@ jobs:
         working-directory: ./packwiz
         run: |
           packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH.mrpack'
-          compression-level: 0
       
       - name: Upload Modrinth modpack artifact
         if: ${{ github.event_name != 'pull' }}
