@@ -13,13 +13,32 @@ on:
       - 'server/**'
   workflow_dispatch:
 
+env:
+  CURSEFORGE: true
+  MODRINTH: true
+
 concurrency:
   group: modpack-build-1211-neoforge
   cancel-in-progress: true
 
 jobs:
-  build-client:
-    name: Build Client Modpack
+  prepare:
+    name: Prepare toggles
+    runs-on: ubuntu-latest
+    outputs:
+      CURSEFORGE: ${{ steps.set.outputs.curseforge }}
+      MODRINTH: ${{ steps.set.outputs.modrinth }}
+    steps:
+      - name: Expose toggles
+        id: set
+        run: |
+          echo "curseforge=${CURSEFORGE}" >> $GITHUB_OUTPUT
+          echo "modrinth=${MODRINTH}" >> $GITHUB_OUTPUT
+
+  build-modrinth-client:
+    name: Build Modrinth Client Modpack
+    needs: prepare
+    if: ${{ needs.prepare.outputs.MODRINTH != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -59,34 +78,78 @@ jobs:
           echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Export client modpack (CurseForge)
+      - name: Export modpack (Modrinth)
+        working-directory: ./packwiz
+        run: |
+          packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH.mrpack'
+          compression-level: 0
+      
+      - name: Upload Modrinth modpack artifact
+        if: ${{ github.event_name != 'pull' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth
+          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH.mrpack
+          compression-level: 0
+  build-curseforge-client:
+    name: Build CurseForge Client Modpack
+    needs: prepare
+    if: ${{ needs.prepare.outputs.CURSEFORGE != 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download packwiz binary
+        uses: dawidd6/action-download-artifact@v12
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: go.yml
+          repo: packwiz/packwiz
+          name: Linux 64-bit x86
+          path: ./packwiz-bin
+
+      - name: Install packwiz
+        run: |
+          chmod +x ./packwiz-bin/packwiz
+          sudo mv ./packwiz-bin/packwiz /usr/local/bin/
+
+      - name: Refresh pack index
+        working-directory: ./packwiz
+        run: packwiz refresh || true
+      - name: Parse pack info
+        id: pack_info
+        run: |
+          NAME=$(grep '^name = ' packwiz/pack.toml | cut -d '"' -f 2)
+          VERSION=$(grep '^version = ' packwiz/pack.toml | cut -d '"' -f 2)
+          SANITIZED_NAME=$(printf '%s' "$NAME" | sed 's/[":<>|*?\\\/]/-/g')
+          echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Export CurseForge client modpack
         working-directory: ./packwiz
         run: |
           packwiz curseforge export --side client --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip'
 
-      - name: Export client modpack (Modrinth)
-        working-directory: ./packwiz
-        run: |
-          packwiz modrinth export --side client --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack'
-
-      - name: Upload client modpack artifact (CurseForge)
+      - name: Upload CurseForge client modpack artifact
         if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - CurseForge Client
           path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip
-          compression-level: 0
-      
-      - name: Upload client modpack artifact (Modrinth)
-        if: ${{ github.event_name != 'pull' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth Client
-          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack
-          compression-level: 0
 
-  build-server:
-    name: Build Server Modpack
+  build-curseforge-server:
+    name: Build CurseForge Server Modpack
+    needs: prepare
+    if: ${{ needs.prepare.outputs.CURSEFORGE != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -119,7 +182,7 @@ jobs:
         run: |
           packwiz refresh || true
 
-      - name: Create server modpack structure
+      - name: Create CurseForge server modpack structure
         run: |
           mkdir -p modpack-server
           mkdir -p modpack-server/config
@@ -145,7 +208,7 @@ jobs:
           echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Export server modpack (CurseForge)
+      - name: Export CurseForge server modpack
         working-directory: ./modpack-server
         run: |
           wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
@@ -182,19 +245,14 @@ jobs:
           rm -f modpack-server/packwiz-installer.jar || true
           rm -f modpack-server/packwiz-installer-bootstrap.jar || true
 
-      - name: Export server modpack (Modrinth)
-        working-directory: ./packwiz
-        run: |
-          packwiz modrinth export --side server --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-MODRINTH.mrpack'
-
-      - name: Upload server modpack artifact (CurseForge)
+      - name: Upload CurseForge server modpack artifact
         if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-CURSEFORGE
           path: modpack-server/
 
-      - name: Upload server modpack artifact (Modrinth)
+      - name: Upload Modrinth server modpack artifact
         if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
