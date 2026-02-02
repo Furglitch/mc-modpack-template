@@ -35,8 +35,8 @@ jobs:
           echo "curseforge=${CURSEFORGE}" >> $GITHUB_OUTPUT
           echo "modrinth=${MODRINTH}" >> $GITHUB_OUTPUT
 
-  build-modrinth-client:
-    name: Build Modrinth Client Modpack
+  build-modrinth:
+    name: Build Modrinth Modpack
     needs: prepare
     if: ${{ needs.prepare.outputs.MODRINTH != 'false' }}
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
           echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Export modpack (Modrinth)
+      - name: Export Modrinth modpack
         working-directory: ./packwiz
         run: |
           packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH.mrpack'
@@ -250,11 +250,3 @@ jobs:
         with:
           name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-CURSEFORGE
           path: modpack-server/
-
-      - name: Upload Modrinth server modpack artifact
-        if: ${{ github.event_name != 'pull' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth Server
-          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-MODRINTH.mrpack
-          compression-level: 0
