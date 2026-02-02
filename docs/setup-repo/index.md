@@ -16,7 +16,8 @@ This will prompt you to create a new repository in your GitHub account with the 
 
 <b>Note:</b> This repository splits into multiple branches for different Minecraft versions and modloaders. Make sure to enable 'Include all branches' when creating the repository so that you can select the correct branch for your modpack.
 
-After creating your repository, you can delete the other branches that you won't be using to avoid confusion and excess Actions runs.
+After creating your repository, you can change the default branch in `Settings`, or delete the other branches that you won't be using to avoid confusion and excess Actions runs.
+<center><img src="https://raw.githubusercontent.com/Furglitch/mc-modpack-template/refs/heads/1.21.1-NeoForge/docs/assets/template-setup/settings_default-branch.png" alt="Branch Selection" height=300px></center><br>
 
 ## Enabling GitHub Actions
 To use the predefined GitHub Actions workflows included in this template, you'll need to enable GitHub Actions in your repository settings.
