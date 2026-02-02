@@ -67,9 +67,9 @@ jobs:
       - name: Export client modpack (Modrinth)
         working-directory: ./packwiz
         run: |
-          packwiz modrinth export --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack'
+          packwiz modrinth export --side client --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-MODRINTH.mrpack'
 
-      - name: Upload client modpack artifact
+      - name: Upload client modpack artifact (CurseForge)
         if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
@@ -77,7 +77,7 @@ jobs:
           path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip
           compression-level: 0
       
-      - name: Upload modrinth client modpack artifact
+      - name: Upload client modpack artifact (Modrinth)
         if: ${{ github.event_name != 'pull' }}
         uses: actions/upload-artifact@v6
         with:
@@ -136,11 +136,20 @@ jobs:
           echo "Downloading NeoForge server $NEOFORGE_VERSION..."
           wget https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-installer.jar -O neoforge-$NEOFORGE_VERSION-installer.jar || true
 
-      - name: Build server modpack
+      - name: Parse pack info
+        id: pack_info
+        run: |
+          NAME=$(grep '^name = ' packwiz/pack.toml | cut -d '"' -f 2)
+          VERSION=$(grep '^version = ' packwiz/pack.toml | cut -d '"' -f 2)
+          SANITIZED_NAME=$(printf '%s' "$NAME" | sed 's/[":<>|*?\\\/]/-/g')
+          echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Export server modpack (CurseForge)
         working-directory: ./modpack-server
         run: |
           wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
-
+          
           echo "Running first pass to collect CurseForge-excluded files..."
           java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml 2>&1 | tee install.log || true
           
@@ -173,18 +182,22 @@ jobs:
           rm -f modpack-server/packwiz-installer.jar || true
           rm -f modpack-server/packwiz-installer-bootstrap.jar || true
 
-      - name: Parse pack info
-        id: pack_info
+      - name: Export server modpack (Modrinth)
+        working-directory: ./packwiz
         run: |
-          NAME=$(grep '^name = ' packwiz/pack.toml | cut -d '"' -f 2)
-          VERSION=$(grep '^version = ' packwiz/pack.toml | cut -d '"' -f 2)
-          SANITIZED_NAME=$(printf '%s' "$NAME" | sed 's/[":<>|*?\\\/]/-/g')
-          echo "name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          packwiz modrinth export --side server --output '${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-MODRINTH.mrpack'
 
-      - name: Upload server modpack artifact
+      - name: Upload server modpack artifact (CurseForge)
         if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER
+          name: ${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-CURSEFORGE
           path: modpack-server/
+
+      - name: Upload server modpack artifact (Modrinth)
+        if: ${{ github.event_name != 'pull' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth Server
+          path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-SERVER-MODRINTH.mrpack
+          compression-level: 0
