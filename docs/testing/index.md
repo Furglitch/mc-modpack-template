@@ -2,7 +2,7 @@
 title: Testing the Modpack
 layout: default
 parent: Minecraft Modpack Template
-nav_order: 3
+nav_order: 2
 ---
 
 # Testing the Modpack

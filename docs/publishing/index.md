@@ -2,7 +2,7 @@
 title: Publishing the Modpack
 layout: default
 parent: Minecraft Modpack Template
-nav_order: 4
+nav_order: 3
 ---
 
 # Publishing the Modpack

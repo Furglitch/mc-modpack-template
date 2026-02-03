@@ -1,8 +1,8 @@
 ---
 title: The 'server' Folder
 layout: default
-parent: Minecraft Modpack Template
-nav_order: 2
+parent: Setting up the Repository
+nav_order: 1
 ---
 
 # The 'server' Folder
