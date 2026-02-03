@@ -1,11 +1,11 @@
 ---
-title: The 'server' Folder
+title: The 'server/' Folder
 layout: default
 parent: Setting up the Repository
 nav_order: 1
 ---
 
-# The 'server' Folder
+# The `server/` Folder
 
 This template includes a `server/` folder that contains files necessary for running a dedicated Minecraft server for your modpack. This includes startup scripts and Java args.
 
