@@ -30,12 +30,6 @@ Enable the following settings:
 - Under `Workflow permissions`, enable `Allow GitHub Actions to create and approve pull requests` if you want to use the automatic mod/-loader update feature.
   <center><img src="https://raw.githubusercontent.com/Furglitch/mc-modpack-template/refs/heads/1.21.1-NeoForge/docs/assets/template-setup/settings_workflow-permissions.png" alt="Workflow Permissions" height=300px></center><br>
 
-## Choosing Modpack Distribution Platforms
-This template supports building modpacks for multiple distribution platforms, including CurseForge and Modrinth.
-
-By default, both CurseForge and Modrinth builds are enabled in the GitHub Actions workflows.
-If you only want to distribute your modpack on one platform, you can disable the other platform's workflow jobs by adjusting the `env` variables in the [workflow file](https://github.com/Furglitch/mc-modpack-template/blob/1.21.1-NeoForge/.github/workflows/modpack-build.yml).
-
 ## 'Initializing' your Modpack
 After enabling GitHub Actions, navigate to the `Actions` tab in your repository. You should see a workflow named `Create New Modpack`.
 
@@ -58,6 +52,12 @@ Once you've set up your repository:
   ```
 
 3. Open the project in your preferred code editor (e.g., VSCode).
+
+## Choosing Modpack Distribution Platforms
+This template supports building modpacks for multiple distribution platforms, including CurseForge and Modrinth.
+
+By default, both CurseForge and Modrinth builds are enabled in the GitHub Actions workflows.
+If you only want to distribute your modpack on one platform, you can disable the other platform's workflow jobs by adjusting the `env` variables in the [workflow file](https://github.com/Furglitch/mc-modpack-template/blob/1.21.1-NeoForge/.github/workflows/modpack-build.yml).
 
 ## Setting up Packwiz
 This template is set up to use [packwiz](https://packwiz.infra.link/) for managing mods and other resources.<br>
