@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: modpack-update-1211-fabric
+  group: modpack-update-1201-fabric
   cancel-in-progress: true
 
 env: 

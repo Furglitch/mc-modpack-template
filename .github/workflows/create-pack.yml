@@ -123,7 +123,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git commit -m "chore: Initial modpack setup via create-pack workflow"
-            git push origin HEAD:1.21.1-Fabric
+            git push origin HEAD:1.20.1-Fabric
           else
             echo "No changes to commit"
           fi

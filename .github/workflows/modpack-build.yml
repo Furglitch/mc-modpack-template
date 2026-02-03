@@ -2,12 +2,12 @@ name: Build Modpack
 
 on:
   push:
-    branches: [ 1.21.1-Fabric ]
+    branches: [ 1.20.1-Fabric ]
     paths:
       - 'packwiz/**'
       - 'server/**'
   pull_request:
-    branches: [ 1.21.1-Fabric ]
+    branches: [ 1.20.1-Fabric ]
     paths:
       - 'packwiz/**'
       - 'server/**'
@@ -18,7 +18,7 @@ env:
   MODRINTH: true
 
 concurrency:
-  group: modpack-build-1211-fabric
+  group: modpack-build-1201-fabric
   cancel-in-progress: true
 
 jobs:
