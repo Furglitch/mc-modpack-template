@@ -84,17 +84,6 @@ jobs:
             fi
           fi
 
-      - name: Update TEMPLATE.md asset paths
-        run: | # Swaps `.github/docs/assets` to just `assets` for correct linking
-          set -euo pipefail
-          file=".github/docs/TEMPLATE.md"
-          if [ ! -f "$file" ]; then
-            echo "$file not found"
-            exit 1
-          fi
-          sed -E -i "s/(\.github\/docs\/assets)/assets/g" "$file"
-          git add "$file"
-
       - name: Remove FUNDING.yml
         run: |
           if [ -f .github/FUNDING.yml ]; then
