@@ -84,16 +84,6 @@ jobs:
             fi
           fi
 
-      - name: Remove Github Pages files
-        run: |
-          set -euo pipefail
-          if [ -d docs ]; then
-            rm -rf docs
-          fi
-          if [ -f .github/workflows/pages.yml ]; then
-            rm -f .github/workflows/pages.yml
-          fi
-
       - name: Update TEMPLATE.md asset paths
         run: | # Swaps `.github/docs/assets` to just `assets` for correct linking
           set -euo pipefail
