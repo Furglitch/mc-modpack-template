@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-INSTALLER="neoforge-$NEOFORGE_VERSION-installer.jar"
+INSTALLER="fabric-%FABRIC_VERSION%-installer.jar"
 
 pause() {
     printf "%s\n" "Press enter to continue..."
@@ -15,11 +15,11 @@ if ! command -v "${CUSTOM_JAVA:-java}" >/dev/null 2>&1; then
     exit 1
 fi
 
-# NEOFORGE
+# FABRIC
 cd "$(dirname "$0")"
 if [ ! -d libraries ]; then
-    echo "Running Neoforge installer."
-    "${CUSTOM_JAVA:-java}" -jar "$INSTALLER" -installServer
+    echo "Running Fabric installer."
+    "${CUSTOM_JAVA:-java}" -jar "$INSTALLER" server -mcversion %MINECRAFT_VERSION% -loader %FABRIC_VERSION% -downloadMinecraft
 fi
 
 if [ "${INSTALL_ONLY:-false}" = "true" ]; then
@@ -37,7 +37,7 @@ fi
 # START
 while true
 do
-    "${CUSTOM_JAVA:-java}" @user_jvm_args.txt @libraries/net/neoforged/neoforge/$NEOFORGE_VERSION/unix_args.txt nogui
+    "${CUSTOM_JAVA:-java}" @user_jvm_args.txt nogui
 
     if [ "${AUTO_RESTART:-true}" = "false" ]; then
         exit 0

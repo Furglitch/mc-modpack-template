@@ -6,16 +6,16 @@ permissions:
 
 on:
   push:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.21.1-Fabric ]
     paths:
       - 'packwiz/**'
   pull_request:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.21.1-Fabric ]
     paths:
       - 'packwiz/**'
 
 concurrency:
-  group: packwiz-refresh-1211-neoforge
+  group: packwiz-refresh-1211-fabric
   cancel-in-progress: true
 
 jobs:

@@ -1,6 +1,6 @@
 @echo off
 
-set INSTALLER="%~dp0neoforge-%NEOFORGE_VERSION%-installer.jar"
+set INSTALLER="%~dp0fabric-%FABRIC_VERSION%-installer.jar"
 
 :JAVA
 if not defined CUSTOM_JAVA (
@@ -13,12 +13,12 @@ if not defined CUSTOM_JAVA (
    exit /b 1
 )
 
-:NEOFORGE
+:FABRIC
 setlocal
 cd /D "%~dp0"
 if not exist "libraries" (
-    echo Running Neoforge installer.
-    "%CUSTOM_JAVA%" -jar %INSTALLER% -installServer
+    echo Running Fabric installer.
+    "%CUSTOM_JAVA%" -jar %INSTALLER% server -mcversion %MINECRAFT_VERSION% -loader %FABRIC_VERSION% -downloadMinecraft
 )
 
 if "%INSTALL_ONLY%" == "true" (
@@ -34,7 +34,7 @@ if not %jver% geq 21  (
 ) 
 
 :START
-"%CUSTOM_JAVA%" @user_jvm_args.txt @libraries\net\neoforged\neoforge\%NEOFORGE_VERSION%\win_args.txt nogui
+"%CUSTOM_JAVA%" @user_jvm_args.txt nogui
 
 if "%AUTO_RESTART%" == "false" ( 
     goto:EOF 

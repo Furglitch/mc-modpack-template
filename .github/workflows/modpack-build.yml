@@ -2,12 +2,12 @@ name: Build Modpack
 
 on:
   push:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.21.1-Fabric ]
     paths:
       - 'packwiz/**'
       - 'server/**'
   pull_request:
-    branches: [ 1.21.1-NeoForge ]
+    branches: [ 1.21.1-Fabric ]
     paths:
       - 'packwiz/**'
       - 'server/**'
@@ -18,7 +18,7 @@ env:
   MODRINTH: true
 
 concurrency:
-  group: modpack-build-1211-neoforge
+  group: modpack-build-1211-fabric
   cancel-in-progress: true
 
 jobs:
@@ -162,6 +162,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Setup JQ
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
       - name: Download packwiz binary
         uses: dawidd6/action-download-artifact@v12
         with:
@@ -186,15 +190,27 @@ jobs:
           mkdir -p modpack-server
           cp -r server/* modpack-server/ || true
 
-      - name: Set up Neoforge installer
-        working-directory: ./modpack-server
+      - name: Get latest Fabric installer version # from https://meta.fabricmc.net/v2/versions/installer
+        id: installer_version
         run: |
-          NEOFORGE_VERSION=$(grep '^neoforge = ' pack.toml | cut -d '"' -f 2)
-          echo "NeoForge version: $NEOFORGE_VERSION"
-          sed -i "s/\\$NEOFORGE_VERSION/${NEOFORGE_VERSION}/g" startserver.sh || true
-          sed -i "s/%NEOFORGE_VERSION%/${NEOFORGE_VERSION}/g" startserver.bat || true
-          echo "Downloading NeoForge server $NEOFORGE_VERSION..."
-          wget https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-installer.jar -O neoforge-$NEOFORGE_VERSION-installer.jar || true
+          MINECRAFT_VERSION=$(grep '^minecraft = ' packwiz/pack.toml | cut -d '"' -f 2)
+          INSTALLER_VERSION=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r '.[].version' | sort -V | tail -n1)
+          echo "installer_version=$INSTALLER_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Fabric installer
+        working-directory: ./modpack-server
+        env:
+          INSTALLER_VERSION: ${{ steps.installer_version.outputs.installer_version }}
+        run: |
+          MINECRAFT_VERSION=$(grep '^minecraft = ' ../packwiz/pack.toml | cut -d '"' -f 2)
+          FABRIC_VERSION=$(grep '^fabric = ' ../packwiz/pack.toml | cut -d '"' -f 2)
+          echo "Fabric version: $FABRIC_VERSION"
+          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.sh || true
+          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.bat || true
+          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.sh || true
+          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.bat || true
+          echo "Downloading Fabric server $FABRIC_VERSION..."
+          wget https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$FABRIC_VERSION/$INSTALLER_VERSION/server/jar -O fabric-$FABRIC_VERSION-installer.jar || true
 
       - name: Parse pack info
         id: pack_info

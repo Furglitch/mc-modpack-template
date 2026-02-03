@@ -3,5 +3,5 @@ A repo template for developing Minecraft modpacks, utilizing packwiz. Includes G
 
 Full documentation for using this template can be found at [wiki.furglitch.com](https://wiki.furglitch.com/mc-modpack-template/).
 
-This branch is for modpacks targeting **Minecraft 1.21.1 with NeoForge**.
+This branch is for modpacks targeting **Minecraft 1.21.1 with Fabric**.
 For other versions, please see the [branches list](https://github.com/Furglitch/mc-modpack-template/branches).
