@@ -188,7 +188,7 @@ jobs:
       - name: Create CurseForge server modpack structure
         run: |
           mkdir -p modpack-server
-          cp -r server/* modpack-server/ || true
+          cp -r server/* modpack-server/
 
       - name: Get latest Fabric installer version # from https://meta.fabricmc.net/v2/versions/installer
         id: installer_version
@@ -197,7 +197,7 @@ jobs:
           INSTALLER_VERSION=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r '.[].version' | sort -V | tail -n1)
           echo "installer_version=$INSTALLER_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Set up Fabric installer
+      - name: Set up Fabric jars
         working-directory: ./modpack-server
         env:
           INSTALLER_VERSION: ${{ steps.installer_version.outputs.installer_version }}
@@ -205,12 +205,16 @@ jobs:
           MINECRAFT_VERSION=$(grep '^minecraft = ' ../packwiz/pack.toml | cut -d '"' -f 2)
           FABRIC_VERSION=$(grep '^fabric = ' ../packwiz/pack.toml | cut -d '"' -f 2)
           echo "Fabric version: $FABRIC_VERSION"
-          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.sh || true
-          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.bat || true
-          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.sh || true
-          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.bat || true
+          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.sh
+          sed -i "s/%FABRIC_VERSION%/${FABRIC_VERSION}/g" startserver.bat
+          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.sh
+          sed -i "s/%MINECRAFT_VERSION%/${MINECRAFT_VERSION}/g" startserver.bat
+          sed -i "s/%INSTALLER_VERSION%/${INSTALLER_VERSION}/g" startserver.sh
+          sed -i "s/%INSTALLER_VERSION%/${INSTALLER_VERSION}/g" startserver.bat
           echo "Downloading Fabric server $FABRIC_VERSION..."
-          wget https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$FABRIC_VERSION/$INSTALLER_VERSION/server/jar -O fabric-$FABRIC_VERSION-installer.jar || true
+          wget https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$FABRIC_VERSION/$INSTALLER_VERSION/server/jar -O fabric-$FABRIC_VERSION-server.jar
+          echo "Downloading Fabric installer $INSTALLER_VERSION..."
+          wget https://maven.fabricmc.net/net/fabricmc/fabric-installer/${INSTALLER_VERSION}/fabric-installer-${INSTALLER_VERSION}.jar -O fabric-$INSTALLER_VERSION-installer.jar
 
       - name: Parse pack info
         id: pack_info
@@ -227,7 +231,7 @@ jobs:
           wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
           
           echo "Running first pass to collect CurseForge-excluded files..."
-          java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml 2>&1 | tee install.log || true
+          java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml 2>&1 | tee install.log
           
           echo "Downloading CurseForge-excluded files from CDN..."
           grep "Please go to" install.log | while read -r line; do
@@ -250,13 +254,13 @@ jobs:
           java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml
           
           echo "Removing client-only folders (resourcepacks, shaderpacks)..."
-          rm -rf resourcepacks shaderpacks || true
+          rm -rf resourcepacks shaderpacks
 
           echo "Removing packwiz installer files..."
           rm -f modpack-server/install.log || true
           rm -f modpack-server/packwiz.json || true
-          rm -f modpack-server/packwiz-installer.jar || true
-          rm -f modpack-server/packwiz-installer-bootstrap.jar || true
+          rm -f modpack-server/packwiz-installer.jar
+          rm -f modpack-server/packwiz-installer-bootstrap.jar
 
       - name: Upload CurseForge server modpack artifact
         if: ${{ github.event_name != 'pull' }}

@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-INSTALLER="fabric-%FABRIC_VERSION%-installer.jar"
+INSTALLER="fabric-%INSTALLER_VERSION%-installer.jar"
+SERVER="fabric-%FABRIC_VERSION%-server.jar"
 
 pause() {
     printf "%s\n" "Press enter to continue..."
@@ -37,7 +38,7 @@ fi
 # START
 while true
 do
-    "${CUSTOM_JAVA:-java}" @user_jvm_args.txt nogui
+    "${CUSTOM_JAVA:-java}" @user_jvm_args.txt -jar $SERVER nogui
 
     if [ "${AUTO_RESTART:-true}" = "false" ]; then
         exit 0

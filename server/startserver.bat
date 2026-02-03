@@ -1,6 +1,7 @@
 @echo off
 
-set INSTALLER="%~dp0fabric-%FABRIC_VERSION%-installer.jar"
+set INSTALLER="fabric-%INSTALLER_VERSION%-installer.jar"
+set SERVER="%~dp0fabric-%FABRIC_VERSION%-server.jar"
 
 :JAVA
 if not defined CUSTOM_JAVA (
@@ -34,7 +35,7 @@ if not %jver% geq 21  (
 ) 
 
 :START
-"%CUSTOM_JAVA%" @user_jvm_args.txt nogui
+"%CUSTOM_JAVA%" @user_jvm_args.txt -jar %SERVER% nogui
 
 if "%AUTO_RESTART%" == "false" ( 
     goto:EOF 
