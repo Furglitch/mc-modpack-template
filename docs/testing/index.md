@@ -11,6 +11,8 @@ After setting up your modpack using this template and starting to develop it, it
 
 It's recommended to do local testing of both the client and server versions of your modpack before publishing it to any platform, to ensure a smooth experience for your users.
 
+The <a href="../tips-and-tricks/">'Tips and Tricks' page</a> contains some recommended mods and tools that can help with testing and debugging your modpack.
+
 ## Client-side Testing
 You can manually build the modpack by running the command `packwiz <platform> build` in your terminal, replacing `<platform>` with the desired platform (`CurseForge` or `Modrinth`). This will generate the modpack files in the `packwiz/` folder.<br>
 Alternatively, you can use generated CLIENT artifact from the GitHub Actions workflow named `Build Modpack`.
