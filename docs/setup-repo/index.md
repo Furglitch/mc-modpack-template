@@ -1,11 +1,12 @@
 ---
-title: Setting up the Repository
+title: Setting up your Repository
 layout: default
 parent: Minecraft Modpack Template
+has_children: true
 nav_order: 1
 ---
 
-# Setting Up Your Repository
+# Setting up your Repository
 
 ## Using the Template
 To create a new modpack project using this template, click the "Use This Template" button at the top-right corner of the template's GitHub page.<br>

@@ -1,7 +1,7 @@
 ---
 title: Importing a Modpack
 layout: default
-parent: Setting up the Repository
+parent: Setting up your Repository
 nav_order: 1
 ---
 
