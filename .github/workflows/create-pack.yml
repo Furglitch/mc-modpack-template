@@ -105,6 +105,12 @@ jobs:
           if [ -f .github/workflows/create-pack.yml ]; then
             git rm -f .github/workflows/create-pack.yml || true
           fi
+      
+      - name: Remove dispatch-modloader-updates workflow
+        run: |
+          if [ -f .github/workflows/dispatch-modloader-updates.yml ]; then
+            git rm -f .github/workflows/dispatch-modloader-updates.yml || true
+          fi
 
       - name: Commit and push changes
         run: |
