@@ -55,10 +55,8 @@ jobs:
         id: branch_name
         if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
         run: |
-          latest="${{ steps.parse.outputs.latest }}"
-          sanitized_version=$(printf '%s' "$latest" | sed 's/\./-/g')
           sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
-          branch="github-actions/${sanitized_branch}/packwiz/update/fabric-${sanitized_version}"
+          branch="github-actions/${sanitized_branch}/packwiz/update/fabric"
           echo "branch=$branch" >> $GITHUB_OUTPUT
 
       - name: Prepare git user
