@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: modpack-update-1211-neoforge
-  cancel-in-progress: true
+  group: cron-updaters-1211NF-${{ github.ref }}
+  cancel-in-progress: false
 
 env: 
   origin-branch: ${{ github.ref_name }}

@@ -4,8 +4,8 @@ on:
   push:
       branches: ["1.21.1-NeoForge"]
       paths:
-          - '.github/workflows/pages.yml'
           - 'docs/**'
+          - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 
@@ -15,11 +15,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build:
+    if: ${{ github.event.repository.visibility == 'public' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

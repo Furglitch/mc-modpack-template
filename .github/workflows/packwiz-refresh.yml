@@ -9,14 +9,16 @@ on:
     branches: [ 1.21.1-NeoForge ]
     paths:
       - 'packwiz/**'
+      - '.github/workflows/packwiz-refresh.yml'
   pull_request:
     branches: [ 1.21.1-NeoForge ]
     paths:
       - 'packwiz/**'
+      - '.github/workflows/packwiz-refresh.yml'
 
 concurrency:
-  group: packwiz-refresh-1211-neoforge
-  cancel-in-progress: true
+  group: commit-updaters-1211NF-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -33,6 +35,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+
+      - name: Pull changes from other workflows
+        run: git pull --rebase
 
       - name: Download packwiz binary
         uses: dawidd6/action-download-artifact@v12

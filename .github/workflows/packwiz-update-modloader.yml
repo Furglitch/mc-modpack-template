@@ -10,6 +10,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: cron-updaters-1211NF-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   maven_repo: "https://maven.neoforged.net/releases"
   maven_path: "net/neoforged/neoforge"
