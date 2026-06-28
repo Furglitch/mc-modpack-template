@@ -10,6 +10,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: cron-updaters-1201F-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   maven_repo: "https://maven.fabricmc.net"
   maven_path: "net/fabricmc/fabric-loader"

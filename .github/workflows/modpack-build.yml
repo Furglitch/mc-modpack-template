@@ -6,11 +6,13 @@ on:
     paths:
       - 'packwiz/**'
       - 'server/**'
+      - '.github/workflows/modpack-build.yml'
   pull_request:
     branches: [ 1.20.1-Fabric ]
     paths:
       - 'packwiz/**'
       - 'server/**'
+      - '.github/workflows/modpack-build.yml'
   workflow_dispatch:
 
 env:
@@ -18,7 +20,7 @@ env:
   MODRINTH: true
 
 concurrency:
-  group: modpack-build-1201-fabric
+  group: check-modpack-1201F-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -57,7 +59,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 
@@ -90,6 +92,8 @@ jobs:
           name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - Modrinth
           path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-MODRINTH.mrpack
           compression-level: 0
+
+
   build-curseforge-client:
     name: Build CurseForge Client Modpack
     needs: prepare
@@ -112,7 +116,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 
@@ -145,6 +149,7 @@ jobs:
           name: ${{ steps.pack_info.outputs.name }} ${{ steps.pack_info.outputs.version }} - CurseForge Client
           path: packwiz/${{ steps.pack_info.outputs.name }}-${{ steps.pack_info.outputs.version }}-CLIENT-CURSEFORGE.zip
 
+
   build-curseforge-server:
     name: Build CurseForge Server Modpack
     needs: prepare
@@ -171,7 +176,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 
@@ -231,36 +236,40 @@ jobs:
           wget https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/packwiz-installer-bootstrap.jar
           
           echo "Running first pass to collect CurseForge-excluded files..."
-          java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml 2>&1 | tee install.log
+          java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml 2>&1 | tee install.log || true
           
           echo "Downloading CurseForge-excluded files from CDN..."
-          grep "Please go to" install.log | while read -r line; do
-            cf_url=$(echo "$line" | grep -oP 'https://www\\.curseforge\\.com[^ ]+')
-            file_id=$(echo "$cf_url" | grep -oP '/files/\\K[0-9]+')
-            dest_path=$(echo "$line" | grep -oP 'save this file to \\K.+')
-            if [ -n "$file_id" ] && [ -n "$dest_path" ]; then
-              id_part1=$(echo "$file_id" | sed 's/\(.*\)\(...\)/\1/')
-              id_part2=$(echo "$file_id" | sed 's/.*\(...\)/\1/')
-              filename=$(basename "$dest_path")
-              encoded_filename=$(echo "$filename" | sed 's/ /%20/g' | sed "s/'/%27/g")
-              cdn_url="https://edge.forgecdn.net/files/${id_part1}/${id_part2}/${encoded_filename}"
-              echo "Downloading: $cdn_url -> $dest_path"
-              mkdir -p "$(dirname "$dest_path")"
-              wget -q "$cdn_url" -O "$dest_path" || echo "Failed to download $cdn_url"
+          while IFS= read -r line; do
+            cf_url=$(echo "$line" | sed -nE 's#.*Please go to (\[)?(https://www\.curseforge\.com[^]) ]+).*#\2#p')
+            file_id=$(echo "$cf_url" | sed -nE 's#.*/files/([0-9]+).*#\1#p')
+            dest_path=$(echo "$line" | sed -nE 's#.*save this file to (.+)$#\1#p')
+
+            if [ -z "$file_id" ] || [ -z "$dest_path" ]; then
+              echo "Skipping unparsable manual-download line: $line"
+              continue
             fi
-          done
+
+            id_part1=$(echo "$file_id" | sed 's/\(.*\)\(...\)/\1/')
+            id_part2=$(echo "$file_id" | sed 's/.*\(...\)/\1/')
+            filename=$(basename "$dest_path")
+            encoded_filename=$(echo "$filename" | sed 's/ /%20/g' | sed "s/'/%27/g")
+            cdn_url="https://edge.forgecdn.net/files/${id_part1}/${id_part2}/${encoded_filename}"
+            echo "Downloading: $cdn_url -> $dest_path"
+            mkdir -p "$(dirname "$dest_path")"
+            wget -q "$cdn_url" -O "$dest_path" || echo "Failed to download $cdn_url"
+          done < <(grep -F "Please go to" install.log || true)
           
           echo "Running second pass to complete installation..."
           java -jar packwiz-installer-bootstrap.jar -g -s server ../packwiz/pack.toml
           
           echo "Removing client-only folders (resourcepacks, shaderpacks)..."
-          rm -rf resourcepacks shaderpacks
+          rm -rf resourcepacks shaderpacks || true
 
           echo "Removing packwiz installer files..."
-          rm -f modpack-server/install.log || true
-          rm -f modpack-server/packwiz.json || true
-          rm -f modpack-server/packwiz-installer.jar
-          rm -f modpack-server/packwiz-installer-bootstrap.jar
+          rm -f install.log || true
+          rm -f packwiz.json || true
+          rm -f packwiz-installer.jar || true
+          rm -f packwiz-installer-bootstrap.jar || true
 
       - name: Upload CurseForge server modpack artifact
         if: ${{ github.event_name != 'pull' }}

@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: modpack-update-1201-fabric
-  cancel-in-progress: true
+  group: cron-updaters-1201F-${{ github.ref }}
+  cancel-in-progress: false
 
 env: 
   origin-branch: ${{ github.ref_name }}
@@ -62,7 +62,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 

@@ -9,14 +9,16 @@ on:
     branches: [ 1.20.1-Fabric ]
     paths:
       - 'packwiz/**'
+      - '.github/workflows/packwiz-refresh.yml'
   pull_request:
     branches: [ 1.20.1-Fabric ]
     paths:
       - 'packwiz/**'
+      - '.github/workflows/packwiz-refresh.yml'
 
 concurrency:
-  group: packwiz-refresh-1201-fabric
-  cancel-in-progress: true
+  group: commit-updaters-1201F-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -34,12 +36,15 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Pull changes from other workflows
+        run: git pull --rebase
+
       - name: Download packwiz binary
         uses: dawidd6/action-download-artifact@v12
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 
