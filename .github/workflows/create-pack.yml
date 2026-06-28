@@ -40,7 +40,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: go.yml
-          repo: packwiz/packwiz
+          repo: AmberIsFrozen/packwiz
           name: Linux 64-bit x86
           path: ./packwiz-bin
 
